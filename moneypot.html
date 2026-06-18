@@ -101,6 +101,11 @@
 
   <div class="sech"><span>条件を入力</span><button class="reset" id="resetBtn">リセット</button></div>
   <div class="grid">
+    <div class="field full">
+      <label>これまでの累計お支払い（税抜）　<span style="color:var(--gold);font-size:11px;">※既存のお客様のみ入力</span></label>
+      <input type="number" inputmode="numeric" id="prior" value="0" step="10000">
+      <span class="hint">会員ランクの判定に使用します。新規のお客様は 0 のままでOK（シルバーから開始）</span>
+    </div>
     <div class="field">
       <label>1回の施術料金（税込）</label>
       <input type="number" inputmode="numeric" id="price" value="16500" step="100">
@@ -169,6 +174,7 @@
 
   <div class="explain" id="explain"></div>
   <div class="rate" id="rate"></div>
+  <div class="rate" id="startrank" style="color:var(--moss);font-weight:600;"></div>
 
   <div class="foot">アクセスオオホリ株式会社 ／ マネーポット説明用アプリ ・ 2026</div>
 </div>
@@ -176,7 +182,7 @@
 <script>
   const $ = id => document.getElementById(id);
   const yen = n => "¥" + Math.round(n).toLocaleString("ja-JP");
-  const DEFAULTS = {price:16500,net:15000,unit:10000,mp:5,base:1,visits:10,mode:"min",fixed:20000};
+  const DEFAULTS = {prior:0,price:16500,net:15000,unit:10000,mp:5,base:1,visits:10,mode:"min",fixed:20000};
 
   function rankFor(cum){
     if(cum >= 500000) return {name:"ダイヤ", mult:5};
@@ -192,7 +198,9 @@
     const mode=$("mode").value, fixed=+$("fixed").value||0;
     $("fixedWrap").style.display=(mode==="fixed")?"flex":"none";
 
-    let bal=0,cumNet=0,tCharge=0,tMp=0,tNormal=0,tPaid=0;
+    const prior=+$("prior").value||0;
+    let bal=0,cumNet=prior,tCharge=0,tMp=0,tNormal=0,tPaid=0;
+    const startRank=rankFor(cumNet);
     const rows=[];
     for(let i=1;i<=visits;i++){
       const start=bal; let charge=0;
@@ -222,9 +230,11 @@
       `<span class="brk">マネーポット ${yen(tMp)} ＋ 通常ポイント ${yen(tNormal)}</span></span>`+
       `終了時に残る <b>${yen(bal)}</b> はお客様自身のお金で、次回以降そのまま使えます。`;
     $("rate").textContent = service ? `実際に使った ${yen(service)} に対して 約${(perk/service*100).toFixed(1)}% の還元` : "";
+    const sr=document.getElementById("startrank");
+    if(sr) sr.textContent = prior>0 ? `開始時点の会員ランク：${startRank.name}（累計 ${yen(prior)} 〜・ポイント${startRank.mult}倍）` : "";
   }
 
-  const ids=["price","net","unit","mp","base","visits","mode","fixed"];
+  const ids=["prior","price","net","unit","mp","base","visits","mode","fixed"];
   ids.forEach(id=>{ $(id).addEventListener("input",run); $(id).addEventListener("change",run); });
 
   $("vMinus").addEventListener("click",()=>{ $("visits").value=Math.max(1,(+$("visits").value||1)-1); run(); });
