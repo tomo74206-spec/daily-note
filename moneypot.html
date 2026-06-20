@@ -116,14 +116,24 @@
       <input type="number" inputmode="numeric" id="net" value="15000" step="100">
       <span class="hint">通常ポイントの計算に使用</span>
     </div>
+    <div class="field full">
+      <label>チャージプラン（ティア）</label>
+      <select id="tier">
+        <option value="10000|5">1万円チャージ → 5%付与（500円分）</option>
+        <option value="30000|7" selected>3万円チャージ → 7%付与（2,100円分）【おすすめ】</option>
+        <option value="50000|10">5万円チャージ → 10%付与（5,000円分）</option>
+        <option value="custom">手入力（カスタム）</option>
+      </select>
+      <span class="hint">チャージ額に応じてポイント付与率が変わります</span>
+    </div>
     <div class="field">
       <label>チャージ単位</label>
-      <input type="number" inputmode="numeric" id="unit" value="10000" step="1000">
+      <input type="number" inputmode="numeric" id="unit" value="30000" step="1000">
       <span class="hint">この単位で補充</span>
     </div>
     <div class="field">
       <label>マネーポット還元率（%）</label>
-      <input type="number" inputmode="decimal" id="mp" value="5" step="0.5">
+      <input type="number" inputmode="decimal" id="mp" value="7" step="0.5">
       <span class="hint">チャージ額に対して付与</span>
     </div>
     <div class="field">
@@ -182,7 +192,7 @@
 <script>
   const $ = id => document.getElementById(id);
   const yen = n => "¥" + Math.round(n).toLocaleString("ja-JP");
-  const DEFAULTS = {prior:0,price:16500,net:15000,unit:10000,mp:5,base:1,visits:10,mode:"min",fixed:20000};
+  const DEFAULTS = {prior:0,price:16500,net:15000,unit:30000,mp:7,base:1,visits:10,mode:"min",fixed:20000,tier:"30000|7"};
 
   function rankFor(cum){
     if(cum >= 500000) return {name:"ダイヤ", mult:5};
@@ -236,6 +246,19 @@
 
   const ids=["prior","price","net","unit","mp","base","visits","mode","fixed"];
   ids.forEach(id=>{ $(id).addEventListener("input",run); $(id).addEventListener("change",run); });
+
+  ["unit","mp"].forEach(id=>{
+    $(id).addEventListener("input",()=>{ $("tier").value="custom"; });
+  });
+
+  $("tier").addEventListener("change",()=>{
+    const v=$("tier").value;
+    if(v!=="custom"){
+      const [u,r]=v.split("|");
+      $("unit").value=u; $("mp").value=r;
+    }
+    run();
+  });
 
   $("vMinus").addEventListener("click",()=>{ $("visits").value=Math.max(1,(+$("visits").value||1)-1); run(); });
   $("vPlus").addEventListener("click",()=>{ $("visits").value=Math.min(60,(+$("visits").value||1)+1); run(); });
